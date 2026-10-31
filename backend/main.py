@@ -16,11 +16,13 @@ import subprocess
 import sys
 import math
 import gc
+import traceback
 import numpy as np
 from datetime import datetime, date, timedelta
 from typing import List, Optional
 
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, status, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -52,6 +54,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logging.exception("Unhandled server exception: %s", exc)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "message": str(exc),
+            "traceback": traceback.format_exc()
+        }
+    )
 
 # Static media uploads directory
 UPLOAD_DIR = os.environ.get("BUILDTRACK_AI_UPLOAD_DIR", os.path.join(os.path.dirname(__file__), "uploads"))
@@ -86,7 +101,7 @@ def health_check():
 def version_check():
     return {
         "version": app.version,
-        "commit": "lean-cpu-optim-v2",
+        "commit": "lean-cpu-optim-v3",
         "service": "BuildTrack AI Vision API",
         "pytorch_threads": 1,
         "memory_ceiling_mb": 512
@@ -546,56 +561,61 @@ async def measure_road_endpoint(
             gsd_m_per_px=gsd_m_per_px,
             road_threshold=road_threshold
         )
+
+        meas = cv_result.get("measurements", {}) if cv_result else {}
+        under_m = float(meas.get("under_construction_length_m", 0.0))
+        corridor_days = int(math.ceil(under_m / 60.0)) if under_m > 0 else 0
+        corridor_date = date.today() + timedelta(days=corridor_days)
+        pred_data = {
+            "estimated_days_remaining": corridor_days,
+            "predicted_completion_date": str(corridor_date),
+            "daily_pace_km": 0.06,
+            "confidence_score": 30.0,
+            "status": "Corridor estimate" if under_m > 0 else "No pending work detected",
+            "forecast_basis": "Single-image estimate for the visible corridor; assumed paving pace 40–80 m/day.",
+            "pace_range_m_per_day": {"low": 40, "midpoint": 60, "high": 80},
+        }
+        pred_data["corridor_under_construction_m"] = under_m
+        pred_data["corridor_days_remaining"] = corridor_days
+        pred_data["corridor_completion_date"] = str(corridor_date)
+
+        return {
+            "status": "success",
+            "processed_image_url": build_media_url(request, f"/static/processed/{processed_filename}"),
+            "raw_image_url": build_media_url(request, f"/static/uploads/{raw_filename}"),
+            "relative_processed_url": f"/static/processed/{processed_filename}",
+            "relative_raw_url": f"/static/uploads/{raw_filename}",
+            "measurements": meas,
+            "cv_analytics": cv_result,
+            "prediction": pred_data,
+            "calibration": {
+                "known_road_width_m": known_road_width_m,
+                "gsd_m_per_px": gsd_m_per_px,
+                "effective_gsd_cm": meas.get("gsd_cm_per_px")
+            }
+        }
     except HTTPException:
         if os.path.exists(raw_path):
-            os.remove(raw_path)
+            try:
+                os.remove(raw_path)
+            except Exception:
+                pass
         raise
     except Exception as e:
+        logging.exception("measure_road_endpoint error: %s", e)
         if os.path.exists(raw_path):
-            os.remove(raw_path)
+            try:
+                os.remove(raw_path)
+            except Exception:
+                pass
         raise HTTPException(status_code=500, detail=f"Measurement failed: {e}")
     finally:
         if frame_path and os.path.exists(frame_path):
-            os.remove(frame_path)
-        import gc
+            try:
+                os.remove(frame_path)
+            except Exception:
+                pass
         gc.collect()
-
-    # A single image can only forecast the visible measured corridor. Use an
-    # explicit production-rate assumption instead of treating one photo as
-    # whole-project progress or presenting a synthetic model as learned data.
-    meas = cv_result.get("measurements", {})
-    under_m = float(meas.get("under_construction_length_m", 0.0))
-    # Local-road paving assumption: 40–80 m/day, with 60 m/day as midpoint.
-    corridor_days = int(math.ceil(under_m / 60.0)) if under_m > 0 else 0
-    corridor_date = date.today() + timedelta(days=corridor_days)
-    pred_data = {
-        "estimated_days_remaining": corridor_days,
-        "predicted_completion_date": str(corridor_date),
-        "daily_pace_km": 0.06,
-        "confidence_score": 30.0,
-        "status": "Corridor estimate" if under_m > 0 else "No pending work detected",
-        "forecast_basis": "Single-image estimate for the visible corridor; assumed paving pace 40–80 m/day.",
-        "pace_range_m_per_day": {"low": 40, "midpoint": 60, "high": 80},
-    }
-    pred_data["corridor_under_construction_m"] = under_m
-    pred_data["corridor_days_remaining"] = corridor_days
-    pred_data["corridor_completion_date"] = str(corridor_date)
-
-    return {
-        "status": "success",
-        "processed_image_url": build_media_url(request, f"/static/processed/{processed_filename}"),
-        "raw_image_url": build_media_url(request, f"/static/uploads/{raw_filename}"),
-        "relative_processed_url": f"/static/processed/{processed_filename}",
-        "relative_raw_url": f"/static/uploads/{raw_filename}",
-        "measurements": meas,
-        "cv_analytics": cv_result,
-        "prediction": pred_data,
-        "calibration": {
-            "known_road_width_m": known_road_width_m,
-            "gsd_m_per_px": gsd_m_per_px,
-            "effective_gsd_cm": meas.get("gsd_cm_per_px")
-        }
-    }
 
 # -------------------------------------------------------------
 # PROGRESS API
