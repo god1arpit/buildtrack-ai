@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "BuildTrack - Construction Labour & Site Progress Management Platform",
   "scripts": {
+    "build": "cd client && npm run build",
     "install:all": "cd server && npm install && cd ../client && npm install",
     "seed": "cd server && npm run seed",
     "server": "cd server && npm start",
