@@ -515,14 +515,10 @@ async def measure_road_endpoint(
             if not cv2.imwrite(frame_path, frame):
                 raise HTTPException(status_code=422, detail="Could not decode a frame from this video.")
             analysis_path = frame_path
-        elif cv2.imread(raw_path) is None:
-            raise HTTPException(status_code=422, detail="The uploaded image could not be decoded.")
 
         cv_result = vision_pipeline.process_media(
             image_path=analysis_path,
             output_path=processed_path,
-            # This endpoint measures only the visible camera frame. It does not
-            # claim a whole project's total or completed length from one photo.
             total_road_km=0.0,
             known_road_width_m=known_road_width_m,
             gsd_m_per_px=gsd_m_per_px,
@@ -539,6 +535,8 @@ async def measure_road_endpoint(
     finally:
         if frame_path and os.path.exists(frame_path):
             os.remove(frame_path)
+        import gc
+        gc.collect()
 
     # A single image can only forecast the visible measured corridor. Use an
     # explicit production-rate assumption instead of treating one photo as

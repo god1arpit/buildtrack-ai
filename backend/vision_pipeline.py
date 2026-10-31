@@ -173,7 +173,14 @@ class RoadVisionPipeline:
         if img is None:
             raise ValueError("The uploaded image could not be decoded.")
 
-        h, w, _ = img.shape
+        # Cap maximum resolution to 1280px to keep memory usage under 30MB
+        # (High-resolution 12MP-48MP smartphone photos would otherwise spike RAM to > 500MB)
+        h, w = img.shape[:2]
+        max_dim = 1280
+        if max(h, w) > max_dim:
+            scale = max_dim / float(max(h, w))
+            img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+            h, w = img.shape[:2]
 
         # 1. Road Segmentation using Trained Model with threshold tuning
         road_mask = self.segment_road_mask(img, threshold=road_threshold)
@@ -187,6 +194,12 @@ class RoadVisionPipeline:
         )
 
         annotated = measured_img
+
+        # Save annotated HUD output
+        cv2.imwrite(output_path, annotated)
+
+        import gc
+        gc.collect()
 
         # 3. Calculate Progress Percentage
         # Project completion percentage based on completed vs under-construction portions
