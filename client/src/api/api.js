@@ -63,8 +63,8 @@ export const getServerHost = () => {
     // Cloudflare Pages hosts the static website separately from the existing
     // Render API. Keep API and uploaded-media requests pointed at that backend
     // instead of sending them to the Pages static host.
-    if (window.location.hostname.endsWith(".pages.dev")) {
-      return normalizeServerHost(import.meta.env.VITE_BUILDTRACK_SERVER_HOST);
+    if (window.location.hostname.endsWith(".pages.dev") || window.location.hostname.endsWith(".vercel.app")) {
+      return "";
     }
     // If accessing from phone browser using local network IP (e.g. 192.168.0.101:5173)
     if (

@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://buildtrack-1-28vu.onrender.com/api/$1"
+    },
+    {
+      "source": "/ai-api/(.*)",
+      "destination": "https://buildtrack-1-28vu.onrender.com/ai-api/$1"
+    },
+    {
+      "source": "/static/(.*)",
+      "destination": "https://buildtrack-1-28vu.onrender.com/static/$1"
+    },
+    {
+      "source": "/uploads/(.*)",
+      "destination": "https://buildtrack-1-28vu.onrender.com/uploads/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
