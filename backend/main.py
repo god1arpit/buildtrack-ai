@@ -499,11 +499,10 @@ async def upload_and_process_media(
 async def measure_road_endpoint(
     request: Request,
     file: UploadFile = File(...),
-    known_road_width_m: float = Form(7.0),
-    gsd_m_per_px: Optional[float] = Form(None),
-    road_threshold: float = Form(0.50),
-    project_id: Optional[str] = Form("default"),
-    db: Session = Depends(get_db)
+    known_road_width_m: Optional[str] = Form("7.0"),
+    gsd_m_per_px: Optional[str] = Form(None),
+    road_threshold: Optional[str] = Form("0.50"),
+    project_id: Optional[str] = Form("default")
 ):
     """
     Measures the road under construction using the trained segmentation model:
@@ -514,6 +513,23 @@ async def measure_road_endpoint(
     - Completed / Paved portion (Length in m & %, Area in sq.m)
     - Station Chainage (Ch 0+000 to Ch 0+XXX)
     """
+    try:
+        width_m = float(known_road_width_m) if known_road_width_m else 7.0
+    except (ValueError, TypeError):
+        width_m = 7.0
+
+    try:
+        thresh = float(road_threshold) if road_threshold else 0.50
+    except (ValueError, TypeError):
+        thresh = 0.50
+
+    gsd_val = None
+    if gsd_m_per_px:
+        try:
+            gsd_val = float(gsd_m_per_px)
+        except (ValueError, TypeError):
+            gsd_val = None
+
     file_ext = os.path.splitext(file.filename or "")[1].lower()
     image_extensions = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
     video_extensions = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
@@ -557,9 +573,9 @@ async def measure_road_endpoint(
             image_path=analysis_path,
             output_path=processed_path,
             total_road_km=0.0,
-            known_road_width_m=known_road_width_m,
-            gsd_m_per_px=gsd_m_per_px,
-            road_threshold=road_threshold
+            known_road_width_m=width_m,
+            gsd_m_per_px=gsd_val,
+            road_threshold=thresh
         )
 
         meas = cv_result.get("measurements", {}) if cv_result else {}
@@ -589,8 +605,8 @@ async def measure_road_endpoint(
             "cv_analytics": cv_result,
             "prediction": pred_data,
             "calibration": {
-                "known_road_width_m": known_road_width_m,
-                "gsd_m_per_px": gsd_m_per_px,
+                "known_road_width_m": width_m,
+                "gsd_m_per_px": gsd_val,
                 "effective_gsd_cm": meas.get("gsd_cm_per_px")
             }
         }
