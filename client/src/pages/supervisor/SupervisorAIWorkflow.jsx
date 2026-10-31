@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api, { measureRoadUnderConstruction, getAiApiBaseUrl, resolveMediaUrl } from "../../api/api";
+import { compressImageForUpload } from "../../utils/imageCompressor";
 import { useAuth } from "../../context/AuthContext";
 import {
   Camera,
@@ -137,8 +138,9 @@ export const SupervisorAIWorkflow = () => {
       setError(null);
       setSyncedSuccess(false);
 
+      const file = await compressImageForUpload(selectedFile);
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("file", file);
       formData.append("known_road_width_m", (knownRoadWidth || 7.0).toString());
       formData.append("road_threshold", roadBoundaryMode === "strict" ? "0.68" : "0.58");
 

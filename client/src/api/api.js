@@ -96,6 +96,9 @@ export const getApiBaseUrl = () => {
     if (window.location.port === "5173" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return "/api";
     }
+    if (window.location.hostname.endsWith(".vercel.app") || window.location.hostname.endsWith(".pages.dev")) {
+      return "https://buildtrack-1-28vu.onrender.com/api";
+    }
   }
 
   const host = getServerHost();
@@ -103,7 +106,7 @@ export const getApiBaseUrl = () => {
   if (host) {
     return `${host}:5000/api`;
   }
-  return import.meta.env.VITE_API_URL || "/api";
+  return import.meta.env.VITE_API_URL || "https://buildtrack-1-28vu.onrender.com/api";
 };
 
 export const getAiApiBaseUrl = () => {
@@ -119,6 +122,9 @@ export const getAiApiBaseUrl = () => {
     if (window.location.port === "5173" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return "/ai-api";
     }
+    if (window.location.hostname.endsWith(".vercel.app") || window.location.hostname.endsWith(".pages.dev")) {
+      return "https://buildtrack-ai.onrender.com/api";
+    }
   }
 
   const host = getServerHost();
@@ -126,7 +132,7 @@ export const getAiApiBaseUrl = () => {
   if (host) {
     return `${host}:8000/api`;
   }
-  return import.meta.env.VITE_AI_API_URL || "/ai-api";
+  return import.meta.env.VITE_AI_API_URL || "https://buildtrack-ai.onrender.com/api";
 };
 
 // Helper to resolve media URLs (handles both /static/ from FastAPI and /uploads/ from Express)
@@ -158,6 +164,16 @@ export const resolveMediaUrl = (url) => {
     }
     return `${host}:8000${url.startsWith("/") ? "" : "/"}${url}`;
   }
+
+  if (typeof window !== "undefined" && (window.location.hostname.endsWith(".vercel.app") || window.location.hostname.endsWith(".pages.dev"))) {
+    if (url.startsWith("/static/")) {
+      return `https://buildtrack-ai.onrender.com${url}`;
+    }
+    if (url.startsWith("/uploads/")) {
+      return `https://buildtrack-1-28vu.onrender.com${url}`;
+    }
+  }
+
   return url;
 };
 

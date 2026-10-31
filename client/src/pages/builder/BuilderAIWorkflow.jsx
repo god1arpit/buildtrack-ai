@@ -11,6 +11,7 @@ import api, {
   createAIReport,
   resolveMediaUrl
 } from "../../api/api";
+import { compressImageForUpload } from "../../utils/imageCompressor";
 import {
   Compass,
   Layers,
@@ -101,6 +102,8 @@ export const BuilderAIWorkflow = () => {
 
   useEffect(() => {
     loadData(selectedProjectId);
+    // Silent warm-up ping for cloud AI service (Render free-tier)
+    fetch("https://buildtrack-ai.onrender.com/api/health").catch(() => {});
   }, [selectedProjectId]);
 
   const handleRefresh = () => {
@@ -113,11 +116,12 @@ export const BuilderAIWorkflow = () => {
 
   const handleUploadSubmit = async (e, overrideFile = null) => {
     if (e && e.preventDefault) e.preventDefault();
-    const file = overrideFile || uploadFile;
+    let file = overrideFile || uploadFile;
     if (!file) return;
 
     try {
       setIsProcessing(true);
+      file = await compressImageForUpload(file);
       const formData = new FormData();
       formData.append("file", file);
       formData.append("known_road_width_m", knownRoadWidth || 7.0);
@@ -133,7 +137,9 @@ export const BuilderAIWorkflow = () => {
     } catch (err) {
       console.error("Upload error:", err);
       const errMsg = err.response?.data?.detail || err.message;
-      if (err.response?.status === 404 || err.code === "ERR_NETWORK" || err.response?.status === 502) {
+      if (err.code === "ECONNABORTED" || err.response?.status === 504) {
+        alert("AI processing took longer than expected. The AI service is warming up, please tap again in a few seconds.");
+      } else if (err.code === "ERR_NETWORK" || err.response?.status === 502) {
         alert("Connecting to AI Cloud Service... If the server was sleeping, it takes ~20 seconds to wake up. Please tap again in a moment.");
       } else {
         alert("AI Road measurement failed: " + errMsg);
@@ -226,7 +232,7 @@ export const BuilderAIWorkflow = () => {
   ];
 
   const handleRunMeasurement = async (overrideFile = null) => {
-    const file = overrideFile || measureFile;
+    let file = overrideFile || measureFile;
     if (!file) {
       setMeasureError("Please upload or select a road image to measure.");
       return;
@@ -234,6 +240,7 @@ export const BuilderAIWorkflow = () => {
     try {
       setIsMeasuring(true);
       setMeasureError(null);
+      file = await compressImageForUpload(file);
       const formData = new FormData();
       formData.append("file", file);
       formData.append("known_road_width_m", knownRoadWidth || 7.0);
@@ -247,10 +254,12 @@ export const BuilderAIWorkflow = () => {
       setMeasureResult(res);
     } catch (err) {
       console.error("Measurement error:", err);
-      if (err.response?.status === 404 || err.code === "ERR_NETWORK" || err.response?.status === 502) {
+      if (err.code === "ECONNABORTED" || err.response?.status === 504) {
+        setMeasureError("AI processing took longer than expected. If the cloud service was sleeping, it is now awake. Please tap again.");
+      } else if (err.code === "ERR_NETWORK" || err.response?.status === 502) {
         setMeasureError("Connecting to AI Cloud Service... If the server was sleeping, it takes ~20 seconds to wake up. Please tap again in a moment.");
       } else {
-        setMeasureError(err.response?.data?.detail || "Failed to calculate road measurements.");
+        setMeasureError(err.response?.data?.detail || err.message || "Failed to calculate road measurements.");
       }
     } finally {
       setIsMeasuring(false);
