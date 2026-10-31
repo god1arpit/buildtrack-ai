@@ -9,11 +9,11 @@
     },
     {
       "source": "/ai-api/(.*)",
-      "destination": "https://buildtrack-1-28vu.onrender.com/ai-api/$1"
+      "destination": "https://buildtrack-ai.onrender.com/api/$1"
     },
     {
       "source": "/static/(.*)",
-      "destination": "https://buildtrack-1-28vu.onrender.com/static/$1"
+      "destination": "https://buildtrack-ai.onrender.com/static/$1"
     },
     {
       "source": "/uploads/(.*)",

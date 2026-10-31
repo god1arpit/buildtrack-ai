@@ -133,8 +133,8 @@ export const BuilderAIWorkflow = () => {
     } catch (err) {
       console.error("Upload error:", err);
       const errMsg = err.response?.data?.detail || err.message;
-      if (err.response?.status === 404 || err.code === "ERR_NETWORK") {
-        alert("Cannot reach local Python AI service (port 8000). To run real PyTorch AI, open BuildTrack on your Wi-Fi (http://192.168.0.101:5173) or connect your server using the Wi-Fi icon at the top.");
+      if (err.response?.status === 404 || err.code === "ERR_NETWORK" || err.response?.status === 502) {
+        alert("Connecting to AI Cloud Service... If the server was sleeping, it takes ~20 seconds to wake up. Please tap again in a moment.");
       } else {
         alert("AI Road measurement failed: " + errMsg);
       }
@@ -247,8 +247,8 @@ export const BuilderAIWorkflow = () => {
       setMeasureResult(res);
     } catch (err) {
       console.error("Measurement error:", err);
-      if (err.response?.status === 404 || err.code === "ERR_NETWORK") {
-        setMeasureError("Cannot reach local Python AI service (port 8000). Please open BuildTrack on local Wi-Fi (http://192.168.0.101:5173) or connect your server via the Wi-Fi icon.");
+      if (err.response?.status === 404 || err.code === "ERR_NETWORK" || err.response?.status === 502) {
+        setMeasureError("Connecting to AI Cloud Service... If the server was sleeping, it takes ~20 seconds to wake up. Please tap again in a moment.");
       } else {
         setMeasureError(err.response?.data?.detail || "Failed to calculate road measurements.");
       }
