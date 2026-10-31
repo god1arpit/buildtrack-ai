@@ -136,13 +136,15 @@ export const BuilderAIWorkflow = () => {
       setMeasureResult(res);
     } catch (err) {
       console.error("Upload error:", err);
-      const errMsg = err.response?.data?.detail || err.message;
-      if (err.code === "ECONNABORTED" || err.response?.status === 504) {
-        alert("AI processing took longer than expected. The AI service is warming up, please tap again in a few seconds.");
-      } else if (err.code === "ERR_NETWORK" || err.response?.status === 502) {
-        alert("Connecting to AI Cloud Service... If the server was sleeping, it takes ~20 seconds to wake up. Please tap again in a moment.");
+      const status = err.response?.status;
+      const code = err.code || err.name || "Error";
+      const errMsg = err.response?.data?.detail || err.message || "Request failed";
+      if (err.code === "ECONNABORTED" || status === 504) {
+        alert("AI processing took longer than expected. Cloud service is warming up, please tap again in a few seconds.");
+      } else if (err.code === "ERR_NETWORK" || status === 502 || status === 503) {
+        alert(`AI Cloud Service is warming up (${status || code}). If the cloud container was waking up, please tap again in 10 seconds.`);
       } else {
-        alert("AI Road measurement failed: " + errMsg);
+        alert(`AI Road measurement failed [${status || code}]: ${errMsg}`);
       }
     } finally {
       setIsProcessing(false);
@@ -254,12 +256,15 @@ export const BuilderAIWorkflow = () => {
       setMeasureResult(res);
     } catch (err) {
       console.error("Measurement error:", err);
-      if (err.code === "ECONNABORTED" || err.response?.status === 504) {
-        setMeasureError("AI processing took longer than expected. If the cloud service was sleeping, it is now awake. Please tap again.");
-      } else if (err.code === "ERR_NETWORK" || err.response?.status === 502) {
-        setMeasureError("Connecting to AI Cloud Service... If the server was sleeping, it takes ~20 seconds to wake up. Please tap again in a moment.");
+      const status = err.response?.status;
+      const code = err.code || err.name || "Error";
+      const errMsg = err.response?.data?.detail || err.message || "Failed to calculate road measurements.";
+      if (err.code === "ECONNABORTED" || status === 504) {
+        setMeasureError("AI processing took longer than expected. Cloud service is warming up, please tap again in a few seconds.");
+      } else if (err.code === "ERR_NETWORK" || status === 502 || status === 503) {
+        setMeasureError(`AI Cloud Service is warming up (${status || code}). If the container was waking up, please tap again in 10 seconds.`);
       } else {
-        setMeasureError(err.response?.data?.detail || err.message || "Failed to calculate road measurements.");
+        setMeasureError(`Measurement failed [${status || code}]: ${errMsg}`);
       }
     } finally {
       setIsMeasuring(false);

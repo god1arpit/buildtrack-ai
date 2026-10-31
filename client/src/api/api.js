@@ -235,9 +235,7 @@ aiApi.interceptors.request.use((config) => {
 
 // Helper services for AI Vision & Workflow
 export const uploadAIInference = async (formData) => {
-  const res = await aiApi.post("/upload", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
-  });
+  const res = await aiApi.post("/upload", formData);
   return res.data;
 };
 
@@ -245,16 +243,14 @@ export const previewRoadMask = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
   const res = await aiApi.post("/road-mask-preview", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
     timeout: 120000,
   });
   return res.data;
 };
 
-export const measureRoadUnderConstruction = async (formData, retryCount = 1) => {
+export const measureRoadUnderConstruction = async (formData, retryCount = 2) => {
   try {
     const res = await aiApi.post("/road-measure", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
       timeout: 180000,
     });
     return res.data;
@@ -267,8 +263,8 @@ export const measureRoadUnderConstruction = async (formData, retryCount = 1) => 
         err.response?.status === 503 ||
         err.response?.status === 504)
     ) {
-      console.warn("AI Cloud Service warming up... auto-retrying in 3 seconds");
-      await new Promise((r) => setTimeout(r, 3000));
+      console.warn(`AI Cloud Service warming up... auto-retrying (${retryCount} left) in 3.5s`);
+      await new Promise((r) => setTimeout(r, 3500));
       return measureRoadUnderConstruction(formData, retryCount - 1);
     }
     throw err;

@@ -1,4 +1,12 @@
 import os
+# Strict single-thread memory ceiling to prevent OOM kills on 512MB cloud tiers
+os.environ["MALLOC_ARENA_MAX"] = "2"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 import shutil
 import uuid
 import cv2
@@ -7,6 +15,7 @@ import logging
 import subprocess
 import sys
 import math
+import gc
 import numpy as np
 from datetime import datetime, date, timedelta
 from typing import List, Optional
@@ -55,12 +64,12 @@ app.mount("/static/processed", StaticFiles(directory=PROCESSED_DIR), name="proce
 
 
 def build_media_url(request: Optional[Request], relative_path: str) -> str:
-    """Build a fully-qualified LAN URL so mobile apps (Capacitor APK) & phones can render images directly."""
-    host = "192.168.0.101:8000"
-    scheme = "http"
+    """Build a fully-qualified cloud URL so mobile phones & browsers can render images directly."""
+    host = "buildtrack-ai.onrender.com"
+    scheme = "https"
     if request:
         req_host = request.headers.get("x-forwarded-host") or request.headers.get("host")
-        if req_host and "localhost" not in req_host and "127.0.0.1" not in req_host:
+        if req_host and "localhost" not in req_host and "127.0.0.1" not in req_host and not req_host.startswith("192.168."):
             host = req_host
         req_scheme = request.headers.get("x-forwarded-proto") or request.url.scheme
         if req_scheme:
@@ -71,6 +80,17 @@ def build_media_url(request: Optional[Request], relative_path: str) -> str:
 @app.get("/api/health")
 def health_check():
     return {"status": "healthy", "service": "BuildTrack AI Vision API", "version": app.version}
+
+
+@app.get("/api/version")
+def version_check():
+    return {
+        "version": app.version,
+        "commit": "lean-cpu-optim-v2",
+        "service": "BuildTrack AI Vision API",
+        "pytorch_threads": 1,
+        "memory_ceiling_mb": 512
+    }
 
 
 @app.post("/api/road-mask-preview")
@@ -498,6 +518,8 @@ async def measure_road_endpoint(
 
     with open(raw_path, "wb") as destination:
         destination.write(payload)
+    del payload
+    gc.collect()
 
     frame_path = None
     analysis_path = raw_path

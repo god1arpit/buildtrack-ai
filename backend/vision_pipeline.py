@@ -117,7 +117,11 @@ class RoadVisionPipeline:
                 tensor = torch.from_numpy(np.ascontiguousarray(normalized.transpose(2, 0, 1))).unsqueeze(0).to(self.device)
 
                 with torch.inference_mode():
-                    prob_320 = torch.sigmoid(self.model(tensor))[0, 0].cpu().numpy()
+                    logits = self.model(tensor)
+                    prob_320 = torch.sigmoid(logits)[0, 0].cpu().numpy()
+                del tensor, logits, normalized, rgb
+                import gc
+                gc.collect()
 
                 # Dynamic threshold: adaptive to mountain/shadow sunlight variations
                 p_max = float(prob_320.max())
@@ -173,10 +177,10 @@ class RoadVisionPipeline:
         if img is None:
             raise ValueError("The uploaded image could not be decoded.")
 
-        # Cap maximum resolution to 1280px to keep memory usage under 30MB
-        # (High-resolution 12MP-48MP smartphone photos would otherwise spike RAM to > 500MB)
+        # Cap maximum resolution to 960px to keep memory usage under 15MB
+        # (High-resolution smartphone photos would otherwise spike RAM to > 500MB)
         h, w = img.shape[:2]
-        max_dim = 1280
+        max_dim = 960
         if max(h, w) > max_dim:
             scale = max_dim / float(max(h, w))
             img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
@@ -196,8 +200,12 @@ class RoadVisionPipeline:
         annotated = measured_img
 
         # Save annotated HUD output
+        if os.path.dirname(output_path):
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
         cv2.imwrite(output_path, annotated)
 
+        # Free image buffers immediately
+        del img, measured_img, annotated, road_mask
         import gc
         gc.collect()
 
@@ -205,10 +213,6 @@ class RoadVisionPipeline:
         # Project completion percentage based on completed vs under-construction portions
         progress_percentage = measurements["completed_pct"]
         completed_km = round(float(total_road_km * (progress_percentage / 100.0)), 2)
-
-        # Save clean annotated result without unnecessary worker or machinery boxes
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        cv2.imwrite(output_path, annotated)
 
         return {
             "completed_km": completed_km,
