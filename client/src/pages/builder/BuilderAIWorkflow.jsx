@@ -4,7 +4,6 @@ import api, {
   fetchAIDashboard, 
   previewRoadMask,
   measureRoadUnderConstruction,
-  generateClientRoadMeasurement,
   uploadAIInference,
   fetchAIAnalytics, 
   fetchAIPrediction,
@@ -132,13 +131,12 @@ export const BuilderAIWorkflow = () => {
       setLatestInference(res);
       setMeasureResult(res);
     } catch (err) {
-      console.warn("Upload measurement fallback triggered:", err);
-      try {
-        const fallbackRes = await generateClientRoadMeasurement(formData);
-        setLatestInference(fallbackRes);
-        setMeasureResult(fallbackRes);
-      } catch (fErr) {
-        console.error("Critical measurement error:", fErr);
+      console.error("Upload error:", err);
+      const errMsg = err.response?.data?.detail || err.message;
+      if (err.response?.status === 404 || err.code === "ERR_NETWORK") {
+        alert("Cannot reach local Python AI service (port 8000). To run real PyTorch AI, open BuildTrack on your Wi-Fi (http://192.168.0.101:5173) or connect your server using the Wi-Fi icon at the top.");
+      } else {
+        alert("AI Road measurement failed: " + errMsg);
       }
     } finally {
       setIsProcessing(false);
@@ -248,12 +246,11 @@ export const BuilderAIWorkflow = () => {
       const res = await measureRoadUnderConstruction(formData);
       setMeasureResult(res);
     } catch (err) {
-      console.warn("Measurement fallback triggered:", err);
-      try {
-        const fallbackRes = await generateClientRoadMeasurement(formData);
-        setMeasureResult(fallbackRes);
-      } catch (fErr) {
-        setMeasureError("Failed to calculate road measurements.");
+      console.error("Measurement error:", err);
+      if (err.response?.status === 404 || err.code === "ERR_NETWORK") {
+        setMeasureError("Cannot reach local Python AI service (port 8000). Please open BuildTrack on local Wi-Fi (http://192.168.0.101:5173) or connect your server via the Wi-Fi icon.");
+      } else {
+        setMeasureError(err.response?.data?.detail || "Failed to calculate road measurements.");
       }
     } finally {
       setIsMeasuring(false);
