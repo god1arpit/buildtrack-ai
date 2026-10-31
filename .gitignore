@@ -27,6 +27,9 @@ client/.gradle/
 *.pth
 *.pt
 *.bin
+# Whitelist production checkpoints under 100MB for cloud deployment
+!backend/models/road_boundary_mapillary_best.pth
+!backend/models/road_boundary_best.pth
 data/
 **/data/
 
