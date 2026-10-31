@@ -29,10 +29,11 @@ class RoadVisionPipeline:
     """
 
     def __init__(self):
-        # Avoid CPU oversubscription on machines serving mobile inference.
-        # Large default thread pools can make a single small U-Net inference
-        # slower when several OpenCV/PyTorch workers compete for the CPU.
-        torch.set_num_threads(min(6, max(1, torch.get_num_threads())))
+        # Strict single-thread CPU allocation to prevent memory spikes on free cloud tiers
+        try:
+            torch.set_num_threads(1)
+        except Exception:
+            pass
         self.colors = {
             "paved_road": (46, 204, 113),    # Emerald Green
             "unpaved_road": (241, 196, 15),  # Amber Yellow
@@ -43,12 +44,14 @@ class RoadVisionPipeline:
             "paver": (26, 188, 156),         # Turquoise
             "truck": (243, 156, 18)          # Golden Yellow
         }
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu")
         self.model = None
-        self._load_trained_model()
+        # Model is loaded lazily on first inference request to keep startup RAM < 50MB
 
     def _load_trained_model(self):
         """Load trained ResNet18 U-Net road segmentation checkpoint."""
+        if self.model is not None:
+            return
         checkpoint_dir = os.path.join(os.path.dirname(__file__), "models")
         candidates = [
             os.path.join(checkpoint_dir, "road_boundary_mapillary_best.pth"),
@@ -66,23 +69,35 @@ class RoadVisionPipeline:
             return
 
         try:
-            checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
-            model = smp.Unet(
-                encoder_name="resnet18",
-                encoder_weights=None,
-                in_channels=3,
-                classes=1,
-                activation=None,
-            ).to(self.device)
-            model.load_state_dict(checkpoint["model_state_dict"])
-            model.eval()
-            self.model = model
+            with torch.inference_mode():
+                checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+                model = smp.Unet(
+                    encoder_name="resnet18",
+                    encoder_weights=None,
+                    in_channels=3,
+                    classes=1,
+                    activation=None,
+                ).to(self.device)
+                model.load_state_dict(checkpoint["model_state_dict"])
+                model.eval()
+                self.model = model
+                del checkpoint
+                import gc
+                gc.collect()
             logging.info("RoadVisionPipeline: loaded trained model from %s", os.path.basename(checkpoint_path))
         except Exception as e:
             logging.exception("Failed to load road model checkpoint: %s", e)
             self.model = None
 
     def segment_road_mask(self, img: np.ndarray, threshold: float = 0.50) -> np.ndarray:
+        """
+        Run deep learning model to get binary road mask:
+        - 320x320 native training resolution for optimal receptive field
+        - Dynamic thresholding to adapt to daylight/shadow contrast
+        - Morphological closing to keep asphalt and subgrade unified
+        """
+        if self.model is None:
+            self._load_trained_model()
         """
         Run deep learning model to get binary road mask:
         - 320x320 native training resolution for optimal receptive field
