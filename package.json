@@ -1,0 +1,16 @@
+{
+  "name": "buildtrack-root",
+  "version": "1.0.0",
+  "description": "BuildTrack - Construction Labour & Site Progress Management Platform",
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "seed": "cd server && npm run seed",
+    "server": "cd server && npm start",
+    "client": "cd client && npm run dev",
+    "setup:ai": "py -3.12 -m venv backend/.venv && backend\\.venv\\Scripts\\python.exe -m pip install -r backend/requirements.txt",
+    "ai": "cd backend && set \"PYTHONPATH=..\\.venv-roadtrain\\Lib\\site-packages;%PYTHONPATH%\" && .venv\\Scripts\\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8000"
+  },
+  "keywords": ["construction", "management", "labour", "attendance"],
+  "author": "",
+  "license": "ISC"
+}

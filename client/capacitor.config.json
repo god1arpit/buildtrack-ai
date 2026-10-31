@@ -1,0 +1,13 @@
+{
+  "appId": "com.buildtrack.app",
+  "appName": "BuildTrack",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": true
+  },
+  "server": {
+    "url": "https://kaleidoscopic-granita-2bb80f.netlify.app",
+    "cleartext": false,
+    "androidScheme": "https"
+  }
+}

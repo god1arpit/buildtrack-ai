@@ -1,0 +1,12 @@
+{
+  "name": "BuildTrack",
+  "short_name": "BuildTrack",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#29282D",
+  "theme_color": "#29282D",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "64x64", "type": "image/png", "purpose": "any" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

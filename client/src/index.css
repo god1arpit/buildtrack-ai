@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-zinc-950 text-zinc-100 antialiased min-h-screen font-sans;
+  }
+}
+
+@layer components {
+  /* Sleek Modern Dark & Emerald Theme Components */
+
+  /* Glassmorphism Panels */
+  .panel-glass {
+    @apply bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 shadow-2xl;
+  }
+
+  /* Glowing Cards */
+  .card-glow {
+    @apply bg-zinc-900/60 border border-zinc-800 rounded-2xl transition-all duration-300;
+  }
+  .card-glow:hover {
+    @apply border-emerald-900/50 shadow-[0_0_30px_-5px_rgba(16,185,129,0.15)];
+  }
+
+  /* Vibrant Accent Gradients */
+  .bg-accent-gradient {
+    @apply bg-gradient-to-r from-emerald-900 to-green-800;
+  }
+
+  /* Subtle entrance animation */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fadeIn {
+    animation: fadeInUp 350ms ease-out;
+  }
+
+  .radial-reveal-link {
+    overflow: hidden;
+  }
+
+  .radial-reveal-fill {
+    position: absolute;
+    inset: 1px;
+    z-index: 0;
+    border-radius: inherit;
+    background: rgb(6 78 59 / 40%);
+    clip-path: circle(0 at var(--radial-x, 50%) var(--radial-y, 50%));
+    transition: clip-path 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .radial-reveal-link:hover .radial-reveal-fill,
+  .radial-reveal-link:focus-visible .radial-reveal-fill {
+    clip-path: circle(var(--radial-radius, 180px) at var(--radial-x, 50%) var(--radial-y, 50%));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-glow {
+      transition: none;
+    }
+    .radial-reveal-fill {
+      transition: none;
+    }
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+  border: 2px solid #09090b;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .card-print {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    color: black !important;
+    background: white !important;
+  }
+}

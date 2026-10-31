@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Python Virtual Environments & Caches
+.venv/
+**/.venv/
+.venv*/
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Build outputs & caches
+dist/
+build/
+client/dist/
+client/android/.gradle/
+client/android/.gradle-user-home/
+client/android/app/build/
+client/android/build/
+client/android/apk_check/
+client/android/capacitor-cordova-android-plugins/
+client/.gradle-user-home/
+client/.gradle/
+
+# Heavy AI Models & Datasets
+*.pth
+*.pt
+*.bin
+data/
+**/data/
+
+# Temporary generated images
+backend/processed/*
+!backend/processed/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Databases & local logs
+*.db
+*.sqlite
+*.log
+.run-logs/
+
+# Archives & Binaries
+*.apk
+*.zip
+*.tar
+*.gz
+*.rar
+cloudflared*.exe
+
+# Temp files & Backups
+.tmp*
+backups/
+.vscode/
+.idea/
+.DS_Store
+
+# Local environment
+.env.local

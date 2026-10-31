@@ -1,0 +1,824 @@
+ <!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BuildTrack — Construction Site Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;6
+  00;700&display=swap" rel="stylesheet">
+  <style>
+  :root{
+    --bg:#0a0a0a; --surface:#18181b; --card:#27272a; --card2:#2f2f33;
+    --border:#3f3f46; --text:#fafafa; --muted:#a1a1aa; --subtle:#71717a;
+    --green:#16a34a; --green2:#15803d; --green3:#22c55e;
+    --red:#ef4444; --amber:#f59e0b; --blue:#3b82f6;
+    --radius:12px; --radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:va
+  r(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;col
+  or:inherit}
+  input,select,textarea{font-family:inherit;font-size:14px;color:var(--text
+  );background:var(--surface);border:1px solid
+  var(--border);border-radius:var(--radius-sm);padding:10px
+  12px;width:100%;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--green)}
+  a{color:var(--green3);text-decoration:none}
+  .hidden{display:none!important}
+
+  /* Layout */
+  .app{min-height:100vh;display:flex;flex-direction:column;max-width:480px;
+  margin:0 auto;background:var(--bg)}
+  @media(min-width:768px){.app{max-width:960px}}
+  .topbar{display:flex;align-items:center;justify-content:space-between;pad
+  ding:16px 20px;border-bottom:1px solid
+  var(--border);background:var(--surface);position:sticky;top:0;z-index:10}
+  .topbar h1{font-size:18px;font-weight:700;letter-spacing:-.3px}
+  .topbar .subtitle{font-size:12px;color:var(--muted)}
+  .topbar .actions{display:flex;gap:8px}
+  .content{flex:1;padding:16px 20px 80px;overflow-y:auto}
+  .bottomnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);wi
+  dth:100%;max-width:480px;background:var(--surface);border-top:1px solid
+  var(--border);display:flex;justify-content:space-around;padding:8px
+  4px;z-index:10}
+  @media(min-width:768px){.bottomnav{max-width:960px}}
+  .navitem{display:flex;flex-direction:column;align-items:center;gap:2px;pa
+  dding:6px 10px;border-radius:8px;color:var(--muted);font-size:11px;font-w
+  eight:500;min-width:56px}
+  .navitem.active{color:var(--green3);background:rgba(34,197,94,.1)}
+  .navitem svg{width:20px;height:20px}
+
+  /* Cards */
+  .card{background:var(--card);border:1px solid var(--border);border-radius
+  :var(--radius);padding:16px;margin-bottom:12px}
+  .card-title{font-size:15px;font-weight:600;margin-bottom:4px}
+  .card-sub{font-size:13px;color:var(--muted)}
+  .statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margi
+  n-bottom:16px}
+  @media(min-width:768px){.statgrid{grid-template-columns:repeat(3,1fr)}}
+  .stat{background:var(--card);border:1px solid
+  var(--border);border-radius:var(--radius);padding:16px}
+  .stat .label{font-size:12px;color:var(--muted);text-transform:uppercase;l
+  etter-spacing:.5px}
+  .stat
+  .value{font-size:28px;font-weight:700;margin-top:4px;color:var(--green3)}
+  .stat .hint{font-size:12px;color:var(--subtle);margin-top:2px}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6p
+  x;padding:10px 16px;border-radius:var(--radius-sm);font-size:14px;font-we
+  ight:600;transition:.15s;min-height:44px}
+  .btn-primary{background:var(--green);color:#fff}
+  .btn-primary:hover{background:var(--green2)}
+  .btn-secondary{background:var(--surface);border:1px solid
+  var(--border);color:var(--text)}
+  .btn-secondary:hover{border-color:var(--green)}
+  .btn-ghost{color:var(--muted)}
+  .btn-ghost:hover{color:var(--text)}
+  .btn-danger{background:transparent;border:1px solid
+  var(--red);color:var(--red)}
+  .btn-sm{padding:6px 10px;min-height:32px;font-size:13px}
+  .btn-block{width:100%}
+
+  /* Forms */
+  .form-group{margin-bottom:14px}
+  .form-group label{display:block;font-size:13px;color:var(--muted);margin-
+  bottom:6px;font-weight:500}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .error-msg{color:var(--red);font-size:13px;margin-top:6px}
+  .empty{display:flex;flex-direction:column;align-items:center;justify-cont
+  ent:center;padding:40px 20px;text-align:center;color:var(--muted)}
+  .empty svg{width:48px;height:48px;margin-bottom:12px;opacity:.5}
+  .empty h3{font-size:16px;color:var(--text);margin-bottom:4px}
+
+  /* Modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:
+  50;display:flex;align-items:flex-end;justify-content:center}
+  @media(min-width:768px){.modal-backdrop{align-items:center}}
+  .modal{background:var(--surface);border:1px solid
+  var(--border);border-radius:var(--radius) var(--radius) 0 0;width:100%;ma
+  x-width:480px;max-height:90vh;overflow-y:auto;padding:20px}
+  @media(min-width:768px){.modal{border-radius:var(--radius)}}
+  .modal h2{font-size:18px;font-weight:700;margin-bottom:16px}
+
+  /* Chips */
+  .chip{display:inline-flex;align-items:center;padding:3px
+  10px;border-radius:999px;font-size:12px;font-weight:600}
+  .chip-present{background:rgba(34,197,94,.15);color:var(--green3)}
+  .chip-absent{background:rgba(239,68,68,.15);color:var(--red)}
+  .chip-pending{background:rgba(245,158,11,.15);color:var(--amber)}
+  .chip-progress{background:rgba(59,130,246,.15);color:var(--blue)}
+  .chip-done{background:rgba(34,197,94,.15);color:var(--green3)}
+
+  /* Attendance row */
+  .att-row{display:flex;align-items:center;justify-content:space-between;pa
+  dding:12px 0;border-bottom:1px solid var(--border)}
+  .att-row:last-child{border-bottom:none}
+  .att-name{font-weight:500}
+  .att-role{font-size:12px;color:var(--muted)}
+  .toggle{display:flex;gap:6px}
+  .toggle button{padding:6px
+  12px;border-radius:6px;font-size:13px;font-weight:600;border:1px solid
+  var(--border);background:var(--surface)}
+  .toggle button.active-present{background:var(--green);color:#fff;border-c
+  olor:var(--green)}
+  .toggle button.active-absent{background:var(--red);color:#fff;border-colo
+  r:var(--red)}
+
+  /* Task row */
+  .task-row{padding:12px 0;border-bottom:1px solid var(--border)}
+  .task-row:last-child{border-bottom:none}
+  .task-title{font-weight:500;margin-bottom:4px}
+  .task-meta{font-size:12px;color:var(--muted)}
+
+  /* Login */
+  .login-wrap{min-height:100vh;display:flex;flex-direction:column;align-ite
+  ms:center;justify-content:center;padding:24px;background:var(--bg)}
+  .login-logo{width:64px;height:64px;border-radius:16px;background:linear-g
+  radient(135deg,var(--green),var(--green3));display:flex;align-items:cente
+  r;justify-content:center;margin-bottom:16px;font-size:28px;font-weight:80
+  0;color:#fff}
+  .login-title{font-size:26px;font-weight:700;margin-bottom:4px}
+  .login-sub{color:var(--muted);margin-bottom:28px;text-align:center}
+  .demo-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:16px
+  ;width:100%;max-width:360px}
+  .demo-btn{background:var(--card);border:1px solid
+  var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;al
+  ign-items:center;gap:10px;text-align:left}
+  .demo-btn:hover{border-color:var(--green)}
+  .demo-btn .role{font-weight:600}
+  .demo-btn .desc{font-size:12px;color:var(--muted)}
+
+  /* Section */
+  .section-title{font-size:16px;font-weight:700;margin:16px 0
+  8px;display:flex;align-items:center;justify-content:space-between}
+  .section-title .btn{padding:4px 10px;min-height:30px;font-size:13px}
+
+  /* Toast */
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);bac
+  kground:var(--card);border:1px solid var(--border);padding:10px
+  16px;border-radius:8px;font-size:14px;z-index:100;box-shadow:0 4px 20px
+  rgba(0,0,0,.4)}
+  </style>
+  </head>
+  <body>
+  <div id="root"></div>
+
+  <script>
+  // ---------- DATA ----------
+  const state = {
+    currentUser: null, // {role, name, workerId?}
+    sites: [
+      {id:1, name:'Green Valley Residency', location:'Sector 12, Noida',
+  status:'Active', supervisorId:2},
+      {id:2, name:'Sunrise Apartments', location:'Gomti Nagar, Lucknow',
+  status:'Active', supervisorId:2}
+    ],
+    workers: [
+      {id:1, name:'Ramesh Kumar', role:'Mason', dailyWage:900, siteId:1},
+      {id:2, name:'Suresh Yadav', role:'Supervisor', dailyWage:1200,
+  siteId:1},
+      {id:3, name:'Mohan Lal', role:'Helper', dailyWage:600, siteId:1},
+      {id:4, name:'Anil Sharma', role:'Mason', dailyWage:950, siteId:2},
+      {id:5, name:'Pintu Singh', role:'Helper', dailyWage:600, siteId:2},
+      {id:6, name:'Geeta Devi', role:'Labour', dailyWage:550, siteId:2}
+    ],
+    attendance: {}, // {date: {workerId: 'present'|'absent'}}
+    tasks: [
+      {id:1, siteId:1, title:'Lay foundation bricks - Block A',
+  assignedTo:1, status:'In Progress'},
+      {id:2, siteId:1, title:'Mix cement for plastering', assignedTo:3,
+  status:'Pending'},
+      {id:3, siteId:2, title:'Tile work - 2nd floor', assignedTo:4,
+  status:'Pending'},
+      {id:4, siteId:2, title:'Clean site & remove debris', assignedTo:5,
+  status:'Done'}
+    ],
+    selectedSiteId: 1,
+    selectedDate: todayStr(),
+    currentView: 'login',
+    modal: null
+  };
+
+  function todayStr(){const d=new Date();return
+  d.toISOString().slice(0,10);}
+  function uid(){return Math.floor(Math.random()*1e9);}
+
+  // seed today's attendance
+  (function seed(){
+    const t=todayStr();
+    state.attendance[t]={1:'present',2:'present',3:'absent',4:'present',5:'
+  present',6:'absent'};
+  })();
+
+  // ---------- HELPERS ----------
+  const $ = (id)=>document.getElementById(id);
+  function toast(msg){const
+  t=document.createElement('div');t.className='toast';t.textContent=msg;doc
+  ument.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
+  function sitesForUser(){
+    if(state.currentUser.role==='Builder') return state.sites;
+    if(state.currentUser.role==='Supervisor') return
+  state.sites.filter(s=>s.supervisorId===state.currentUser.supervisorId);
+    return [];
+  }
+  function workersForSite(siteId){return
+  state.workers.filter(w=>w.siteId===siteId);}
+  function workersVisible(){
+    if(state.currentUser.role==='Labour') return
+  state.workers.filter(w=>w.id===state.currentUser.workerId);
+    const ids=new Set(sitesForUser().map(s=>s.id));
+    return state.workers.filter(w=>ids.has(w.siteId));
+  }
+  function siteName(id){const s=state.sites.find(x=>x.id===id);return
+  s?s.name:'—';}
+  function supervisorName(id){const
+  w=state.workers.find(x=>x.id===id);return w?w.name:'Unassigned';}
+  function workerName(id){const w=state.workers.find(x=>x.id===id);return
+  w?w.name:'—';}
+
+  function setView(v){state.currentView=v;render();}
+  function openModal(html){state.modal=html;renderModal();}
+  function closeModal(){state.modal=null;const
+  m=$('modalRoot');if(m)m.innerHTML='';}
+
+  function renderModal(){
+    let root=$('modalRoot');
+    if(!root){root=document.createElement('div');root.id='modalRoot';docume
+  nt.body.appendChild(root);}
+    if(!state.modal){root.innerHTML='';return;}
+    root.innerHTML=`<div class="modal-backdrop"
+  onclick="if(event.target===this)closeModal()"><div
+  class="modal">${state.modal}</div></div>`;
+  }
+
+  // ---------- RENDER ----------
+  function render(){
+    const root=$('root');
+    if(state.currentView==='login'){root.innerHTML=renderLogin();return;}
+    root.innerHTML=renderShell();
+    renderContent();
+    renderModal();
+  }
+
+  function renderLogin(){
+    return `
+    <div class="login-wrap">
+      <div class="login-logo">BT</div>
+      <div class="login-title">BuildTrack</div>
+      <div class="login-sub">Construction labour &amp; site
+  management</div>
+      <div style="width:100%;max-width:360px">
+        <div class="form-group">
+          <label>Role</label>
+          <select id="loginRole">
+            <option value="">Select role</option>
+            <option value="Builder">Builder</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Labour">Labour</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Name</label>
+          <input id="loginName" placeholder="Your name" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input id="loginPass" type="password" placeholder="Any password
+  (demo)" />
+        </div>
+        <div id="loginErr" class="error-msg hidden"></div>
+        <button class="btn btn-primary btn-block" onclick="doLogin()">Sign
+  In</button>
+      </div>
+      <div class="demo-grid">
+        <button class="demo-btn" onclick="demoLogin('Builder')">
+          <div><div class="role">Demo Builder</div><div class="desc">Full
+  access to all sites & workers</div></div>
+        </button>
+        <button class="demo-btn" onclick="demoLogin('Supervisor')">
+          <div><div class="role">Demo Supervisor</div><div
+  class="desc">Manage assigned sites only</div></div>
+        </button>
+        <button class="demo-btn" onclick="demoLogin('Labour')">
+          <div><div class="role">Demo Labour</div><div class="desc">View
+  own attendance & tasks</div></div>
+        </button>
+      </div>
+    </div>`;
+  }
+
+  function doLogin(){
+    const role=$('loginRole').value;
+    const name=$('loginName').value.trim();
+    const err=$('loginErr');
+    err.classList.add('hidden');
+    if(!role){err.textContent='Please select a
+  role.';err.classList.remove('hidden');return;}
+    if(!name){err.textContent='Please enter your
+  name.';err.classList.remove('hidden');return;}
+    if(role==='Labour'){
+      const
+  w=state.workers.find(x=>x.name.toLowerCase()===name.toLowerCase());
+      if(!w){err.textContent='No labourer found with that name. Try "Geeta
+  Devi" or "Pintu Singh".';err.classList.remove('hidden');return;}
+      state.currentUser={role:'Labour',name:w.name,workerId:w.id};
+    } else if(role==='Supervisor'){
+      state.currentUser={role:'Supervisor',name:name||'Suresh
+  Yadav',supervisorId:2};
+    } else {
+      state.currentUser={role:'Builder',name:name||'Builder'};
+    }
+    state.currentView='dashboard';
+    render();
+    toast('Welcome, '+state.currentUser.name);
+  }
+
+  function demoLogin(role){
+    if(role==='Builder') state.currentUser={role:'Builder',name:'Rajesh
+  Builder'};
+    else if(role==='Supervisor')
+  state.currentUser={role:'Supervisor',name:'Suresh Yadav',supervisorId:2};
+    else state.currentUser={role:'Labour',name:'Geeta Devi',workerId:6};
+    state.currentView='dashboard';
+    render();
+    toast('Welcome, '+state.currentUser.name);
+  }
+
+  function renderShell(){
+    const isBuilder=state.currentUser.role==='Builder';
+    const isSupervisor=state.currentUser.role==='Supervisor';
+    const isLabour=state.currentUser.role==='Labour';
+    const navItems = isLabour
+      ? [{v:'dashboard',l:'Home',i:homeIcon},{v:'attendance',l:'Attendance'
+  ,i:calIcon},{v:'tasks',l:'Tasks',i:taskIcon}]
+      : [{v:'dashboard',l:'Dashboard',i:homeIcon},{v:'sites',l:'Sites',i:si
+  teIcon},{v:'workers',l:'Workers',i:workerIcon},{v:'attendance',l:'Attenda
+  nce',i:calIcon},{v:'tasks',l:'Tasks',i:taskIcon}];
+    return `
+    <div class="app">
+      <div class="topbar">
+        <div><h1>BuildTrack</h1><div
+  class="subtitle">${state.currentUser.role} ·
+  ${state.currentUser.name}</div></div>
+        <div class="actions"><button class="btn btn-ghost btn-sm"
+  onclick="logout()">Logout</button></div>
+      </div>
+      <div class="content" id="content"></div>
+      <nav class="bottomnav">
+        ${navItems.map(n=>`<button class="navitem
+  ${state.currentView===n.v?'active':''}" onclick="setView('${n.v}')">${n.i
+  }<span>${n.l}</span></button>`).join('')}
+      </nav>
+    </div>`;
+  }
+
+  const homeIcon=`<svg viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0
+  01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15
+  22"/></svg>`;
+  const siteIcon=`<svg viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18"
+  height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>`;
+  const workerIcon=`<svg viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0
+  00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23
+  21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>`;
+  const calIcon=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line
+  x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line
+  x1="3" y1="10" x2="21" y2="10"/></svg>`;
+  const taskIcon=`<svg viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path
+  d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>`;
+
+  function renderContent(){
+    const c=$('content');
+    switch(state.currentView){
+      case 'dashboard': c.innerHTML=renderDashboard(); break;
+      case 'sites': c.innerHTML=renderSites(); break;
+      case 'workers': c.innerHTML=renderWorkers(); break;
+      case 'attendance': c.innerHTML=renderAttendance(); break;
+      case 'tasks': c.innerHTML=renderTasks(); break;
+      default: c.innerHTML=renderDashboard();
+    }
+  }
+
+  function renderDashboard(){
+    const user=state.currentUser;
+    if(user.role==='Labour'){
+      const w=state.workers.find(x=>x.id===user.workerId);
+      const t=todayStr();
+      const status=state.attendance[t]?.[w.id]||'not marked';
+      const myTasks=state.tasks.filter(t=>t.assignedTo===w.id);
+      return `
+        <div class="statgrid">
+          <div class="stat"><div class="label">Today</div><div
+  class="value" style="font-size:18px">${status==='present'?'Present':statu
+  s==='absent'?'Absent':'Not marked'}</div><div
+  class="hint">${t}</div></div>
+          <div class="stat"><div class="label">My Tasks</div><div
+  class="value">${myTasks.length}</div><div
+  class="hint">${myTasks.filter(t=>t.status==='Done').length}
+  done</div></div>
+          <div class="stat"><div class="label">Daily Wage</div><div
+  class="value" style="font-size:18px">₹${w.dailyWage}</div><div
+  class="hint">${w.role}</div></div>
+        </div>
+        <div class="section-title">My Tasks</div>
+        ${myTasks.length?myTasks.map(taskRow).join(''):'<div
+  class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="2"><path d="M9 11l3 3L22 4"/></svg><h3>No tasks
+  assigned</h3><p>You have no tasks right now.</p></div>'}
+      `;
+    }
+    const sites=sitesForUser();
+    const workers=workersVisible();
+    const t=todayStr();
+    const att=state.attendance[t]||{};
+    const presentCount=sites.reduce((acc,s)=>acc+workersForSite(s.id).filte
+  r(w=>att[w.id]==='present').length,0);
+    const
+  totalWorkers=sites.reduce((acc,s)=>acc+workersForSite(s.id).length,0);
+    const activeSites=sites.filter(s=>s.status==='Active').length;
+    return `
+      <div class="statgrid">
+        <div class="stat"><div class="label">Total Workers</div><div
+  class="value">${workers.length}</div><div class="hint">across
+  ${sites.length} sites</div></div>
+        <div class="stat"><div class="label">Active Projects</div><div
+  class="value">${activeSites}</div><div class="hint">of ${sites.length}
+  total</div></div>
+        <div class="stat"><div class="label">Today's Turnout</div><div
+  class="value">${presentCount}/${totalWorkers}</div><div
+  class="hint">${totalWorkers?Math.round(presentCount/totalWorkers*100):0}%
+  present</div></div>
+      </div>
+      <div class="section-title">Quick Actions</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-secondary" onclick="setView('sites')">Manage
+  Sites</button>
+        <button class="btn btn-secondary"
+  onclick="setView('workers')">Manage Workers</button>
+        <button class="btn btn-secondary"
+  onclick="setView('attendance')">Mark Attendance</button>
+        <button class="btn btn-secondary" onclick="setView('tasks')">Assign
+  Tasks</button>
+      </div>
+      <div class="section-title">Recent Sites</div>
+      ${sites.length?sites.slice(0,3).map(siteCard).join(''):'<div
+  class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="2"><rect x="3" y="3" width="18" height="18"
+  rx="2"/></svg><h3>No sites yet</h3><p>Add your first construction site to
+  get started.</p></div>'}
+    `;
+  }
+
+  function siteCard(s){
+    return `<div class="card">
+      <div
+  style="display:flex;justify-content:space-between;align-items:start">
+        <div><div class="card-title">${s.name}</div><div
+  class="card-sub">${s.location}</div></div>
+        <span class="chip
+  ${s.status==='Active'?'chip-present':'chip-pending'}">${s.status}</span>
+      </div>
+      <div class="card-sub" style="margin-top:8px">Supervisor:
+  ${supervisorName(s.supervisorId)} · ${workersForSite(s.id).length}
+  workers</div>
+      ${state.currentUser.role==='Builder'?`<div
+  style="margin-top:10px"><button class="btn btn-ghost btn-sm"
+  onclick="editSite(${s.id})">Edit</button></div>`:''}
+    </div>`;
+  }
+
+  function renderSites(){
+    const sites=sitesForUser();
+    return `
+      <div class="section-title">Sites / Projects <button class="btn
+  btn-primary btn-sm" onclick="addSite()">+ Add Site</button></div>
+      ${sites.length?sites.map(siteCard).join(''):`<div class="empty"><svg
+  viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="2"><rect x="3" y="3" width="18" height="18"
+  rx="2"/></svg><h3>No sites yet</h3><p>Create your first construction site
+  to start managing workers.</p><button class="btn btn-primary"
+  style="margin-top:12px" onclick="addSite()">+ Add Site</button></div>`}
+    `;
+  }
+
+  function addSite(){
+    const supervisors=state.workers.filter(w=>w.role==='Supervisor');
+    openModal(`
+      <h2>Add Site</h2>
+      <div class="form-group"><label>Site Name</label><input id="sName"
+  placeholder="e.g. Green Valley Residency" /></div>
+      <div class="form-group"><label>Location</label><input id="sLoc"
+  placeholder="City, area" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label><select
+  id="sStatus"><option>Active</option><option>On
+  Hold</option><option>Completed</option></select></div>
+        <div class="form-group"><label>Supervisor</label><select
+  id="sSup"><option
+  value="">Unassigned</option>${supervisors.map(w=>`<option
+  value="${w.id}">${w.name}</option>`).join('')}</select></div>
+      </div>
+      <div id="sErr" class="error-msg hidden"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1"
+  onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1"
+  onclick="saveSite()">Save</button>
+      </div>
+    `);
+  }
+
+  function editSite(id){
+    const s=state.sites.find(x=>x.id===id);
+    const supervisors=state.workers.filter(w=>w.role==='Supervisor');
+    openModal(`
+      <h2>Edit Site</h2>
+      <div class="form-group"><label>Site Name</label><input id="sName"
+  value="${s.name}" /></div>
+      <div class="form-group"><label>Location</label><input id="sLoc"
+  value="${s.location}" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label><select
+  id="sStatus"><option
+  ${s.status==='Active'?'selected':''}>Active</option><option
+  ${s.status==='On Hold'?'selected':''}>On Hold</option><option
+  ${s.status==='Completed'?'selected':''}>Completed</option></select></div>
+        <div class="form-group"><label>Supervisor</label><select
+  id="sSup"><option
+  value="">Unassigned</option>${supervisors.map(w=>`<option value="${w.id}"
+  ${s.supervisorId===w.id?'selected':''}>${w.name}</option>`).join('')}</s
+  elect></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1"
+  onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1"
+  onclick="saveSite(${id})">Save</button>
+      </div>
+    `);
+  }
+
+  function saveSite(editId){
+    const name=$('sName').value.trim();
+    const loc=$('sLoc').value.trim();
+    const err=$('sErr');
+    err.classList.add('hidden');
+    if(!name){err.textContent='Site name is
+  required.';err.classList.remove('hidden');return;}
+    const sup=$('sSup').value;
+    if(editId){
+      const s=state.sites.find(x=>x.id===editId);
+      s.name=name;s.location=loc;s.status=$('sStatus').value;s.supervisorId
+  =sup?+sup:null;
+    } else {
+      state.sites.push({id:uid(),name,location:loc,status:$('sStatus').valu
+  e,supervisorId:sup?+sup:null});
+    }
+    closeModal();render();toast(editId?'Site updated':'Site added');
+  }
+
+  function renderWorkers(){
+    const workers=workersVisible();
+    return `
+      <div class="section-title">Workers <button class="btn btn-primary
+  btn-sm" onclick="addWorker()">+ Add Worker</button></div>
+      ${workers.length?workers.map(w=>`
+        <div class="card" style="padding:12px">
+          <div
+  style="display:flex;justify-content:space-between;align-items:center">
+            <div><div class="card-title">${w.name}</div><div
+  class="card-sub">${w.role} · ₹${w.dailyWage}/day</div></div>
+            <div class="card-sub">${siteName(w.siteId)}</div>
+          </div>
+        </div>`).join(''):`<div class="empty"><svg viewBox="0 0 24 24"
+  fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4
+  0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><h3>No
+  workers yet</h3><p>Add workers to your sites to track
+  attendance.</p><button class="btn btn-primary" style="margin-top:12px"
+  onclick="addWorker()">+ Add Worker</button></div>`}
+    `;
+  }
+
+  function addWorker(){
+    const sites=sitesForUser().length?sitesForUser():state.sites;
+    openModal(`
+      <h2>Add Worker</h2>
+      <div class="form-group"><label>Name *</label><input id="wName"
+  placeholder="Full name" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Role</label><select
+  id="wRole"><option>Mason</option><option>Helper</option><option>Superviso
+  r</option><option>Labour</option></select></div>
+        <div class="form-group"><label>Daily Wage (₹)</label><input
+  id="wWage" type="number" value="600" /></div>
+      </div>
+      <div class="form-group"><label>Site</label><select
+  id="wSite">${sites.map(s=>`<option
+  value="${s.id}">${s.name}</option>`).join('')}</select></div>
+      <div id="wErr" class="error-msg hidden"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1"
+  onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1"
+  onclick="saveWorker()">Save</button>
+      </div>
+    `);
+  }
+
+  function saveWorker(){
+    const name=$('wName').value.trim();
+    const err=$('wErr');
+    err.classList.add('hidden');
+    if(!name){err.textContent='Worker name is
+  required.';err.classList.remove('hidden');return;}
+    state.workers.push({id:uid(),name,role:$('wRole').value,dailyWage:+$('w
+  Wage').value||0,siteId:+$('wSite').value});
+    closeModal();render();toast('Worker added');
+  }
+
+  function renderAttendance(){
+    const sites=sitesForUser().length?sitesForUser():state.sites;
+    const siteId=state.selectedSiteId || sites[0]?.id;
+    state.selectedSiteId=siteId;
+    const workers=workersForSite(siteId);
+    const date=state.selectedDate;
+    if(!state.attendance[date]) state.attendance[date]={};
+    const att=state.attendance[date];
+    const present=workers.filter(w=>att[w.id]==='present').length;
+    return `
+      <div class="section-title">Attendance</div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group"><label>Date</label><input type="date"
+  value="${date}" onchange="state.selectedDate=this.value;render()"
+  /></div>
+          <div class="form-group"><label>Site</label><select onchange="stat
+  e.selectedSiteId=+this.value;render()">${sites.map(s=>`<option
+  value="${s.id}" ${s.id===siteId?'selected':''}>${s.name}</option>`).join(
+  '')}</select></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:
+  center;padding:8px 0">
+          <span style="font-weight:600">Present / Total</span>
+          <span
+  style="font-size:20px;font-weight:700;color:var(--green3)">${present} /
+  ${workers.length}</span>
+        </div>
+      </div>
+      ${workers.length?workers.map(w=>{
+        const v=att[w.id]||'';
+        return `<div class="card" style="padding:12px">
+          <div
+  style="display:flex;justify-content:space-between;align-items:center">
+            <div><div class="card-title">${w.name}</div><div
+  class="card-sub">${w.role}</div></div>
+            <div class="toggle">
+              <button class="${v==='present'?'active-present':''}"
+  onclick="markAtt(${w.id},'present')">Present</button>
+              <button class="${v==='absent'?'active-absent':''}"
+  onclick="markAtt(${w.id},'absent')">Absent</button>
+            </div>
+          </div>
+        </div>`;}).join(''):`<div class="empty"><svg viewBox="0 0 24 24"
+  fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4"
+  width="18" height="18" rx="2"/></svg><h3>No workers on this
+  site</h3><p>Add workers to mark attendance.</p></div>`}
+    `;
+  }
+
+  function markAtt(workerId,status){
+    const date=state.selectedDate;
+    if(!state.attendance[date]) state.attendance[date]={};
+    state.attendance[date][workerId]=status;
+    render();
+  }
+
+  function renderTasks(){
+    const sites=sitesForUser().length?sitesForUser():state.sites;
+    const siteId=state.selectedSiteId || sites[0]?.id;
+    const tasks=state.tasks.filter(t=>t.siteId===siteId);
+    return `
+      <div class="section-title">Tasks <button class="btn btn-primary
+  btn-sm" onclick="addTask()">+ Add Task</button></div>
+      <div class="card" style="padding:12px">
+        <label style="font-size:13px;color:var(--muted)">Site</label>
+        <select onchange="state.selectedSiteId=+this.value;render()"
+  style="margin-top:6px">${sites.map(s=>`<option value="${s.id}"
+  ${s.id===siteId?'selected':''}>${s.name}</option>`).join('')}</select>
+      </div>
+      ${tasks.length?tasks.map(t=>`
+        <div class="card" style="padding:12px">
+          <div style="display:flex;justify-content:space-between;align-item
+  s:start;gap:8px">
+            <div style="flex:1"><div
+  class="card-title">${t.title}</div><div class="card-sub">Assigned:
+  ${workerName(t.assignedTo)}</div></div>
+            <select onchange="setTaskStatus(${t.id},this.value)"
+  style="width:auto;padding:6px 8px;font-size:12px">
+              <option
+  ${t.status==='Pending'?'selected':''}>Pending</option>
+              <option ${t.status==='In Progress'?'selected':''}>In
+  Progress</option>
+              <option ${t.status==='Done'?'selected':''}>Done</option>
+            </select>
+          </div>
+        </div>`).join(''):`<div class="empty"><svg viewBox="0 0 24 24"
+  fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22
+  4"/></svg><h3>No tasks yet</h3><p>Create tasks and assign them to
+  workers.</p><button class="btn btn-primary" style="margin-top:12px"
+  onclick="addTask()">+ Add Task</button></div>`}
+    `;
+  }
+
+  function taskRow(t){
+    const chipClass=t.status==='Done'?'chip-done':t.status==='In
+  Progress'?'chip-progress':'chip-pending';
+    return `<div class="card" style="padding:12px"><div style="display:flex
+  ;justify-content:space-between;align-items:center"><div><div
+  class="card-title">${t.title}</div><div
+  class="card-sub">${siteName(t.siteId)} ·
+  ${workerName(t.assignedTo)}</div></div><span class="chip
+  ${chipClass}">${t.status}</span></div></div>`;
+  }
+
+  function setTaskStatus(id,status){const t=state.tasks.find(x=>x.id===id);
+  if(t){t.status=status;render();toast('Status updated');}}
+
+  function addTask(){
+    const sites=sitesForUser().length?sitesForUser():state.sites;
+    const siteId=state.selectedSiteId||sites[0]?.id;
+    const workers=workersForSite(siteId);
+    openModal(`
+      <h2>Add Task</h2>
+      <div class="form-group"><label>Title</label><input id="tTitle"
+  placeholder="e.g. Lay foundation bricks" /></div>
+      <div class="form-group"><label>Site</label><select id="tSite"
+  onchange="refreshTaskWorkers()">${sites.map(s=>`<option value="${s.id}"
+  ${s.id===siteId?'selected':''}>${s.name}</option>`).join('')}</select></d
+  iv>
+      <div class="form-group"><label>Assign To</label><select
+  id="tAssign">${workers.map(w=>`<option
+  value="${w.id}">${w.name}</option>`).join('')}</select></div>
+      <div id="tErr" class="error-msg hidden"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1"
+  onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1"
+  onclick="saveTask()">Save</button>
+      </div>
+    `);
+  }
+  function refreshTaskWorkers(){
+    const siteId=+($('tSite').value);
+    const workers=workersForSite(siteId);
+    $('tAssign').innerHTML=workers.map(w=>`<option
+  value="${w.id}">${w.name}</option>`).join('');
+  }
+  function saveTask(){
+    const title=$('tTitle').value.trim();
+    const err=$('tErr');
+    err.classList.add('hidden');
+    if(!title){err.textContent='Task title is
+  required.';err.classList.remove('hidden');return;}
+    state.tasks.push({id:uid(),siteId:+$('tSite').value,title,assignedTo:+$
+  ('tAssign').value,status:'Pending'});
+    closeModal();render();toast('Task added');
+  }
+
+  function logout(){state.currentUser=null;state.currentView='login';render
+  ();toast('Logged out');}
+
+  // init
+      </div>
+    `);
+  }
+  function refreshTaskWorkers(){
+    const siteId=+($('tSite').value);
+    const workers=workersForSite(siteId);
+    $('tAssign').innerHTML=workers.map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+  }
+  function saveTask(){
+    const title=$('tTitle').value.trim();
+    const err=$('tErr');
+    err.classList.add('hidden');
+    if(!title){err.textContent='Task title is required.';err.classList.remove('hidden');return;}
+    state.tasks.push({id:uid(),siteId:+$('tSite').value,title,assignedTo:+$('tAssign').value,status:'Pending'});
+    closeModal();render();toast('Task added');
+  }
+
+  function logout(){state.currentUser=null;state.currentView='login';render();toast('Logged out');}
+
+  // init
+  render();
+  </script>
+  </body>
+  </html>
