@@ -823,7 +823,7 @@ export const BuilderAIWorkflow = () => {
                       className="w-full h-[460px] object-contain bg-black/40"
                       onError={(e) => {
                         const rel = measureResult.relative_processed_url || measureResult.processed_image_url;
-                        const fallback = "http://192.168.0.101:8000" + (rel.startsWith("/") ? rel : "/" + rel);
+                        const fallback = "https://buildtrack-ai.onrender.com" + (rel.startsWith("/") ? rel : "/" + rel);
                         if (e.target.src !== fallback) {
                           e.target.src = fallback;
                         }
@@ -1235,7 +1235,7 @@ export const BuilderAIWorkflow = () => {
                     className="w-full h-96 object-contain"
                     onError={(e) => {
                       const rel = latestInference.relative_processed_url || latestInference.processed_image_url;
-                      const fallback = "http://192.168.0.101:8000" + (rel.startsWith("/") ? rel : "/" + rel);
+                      const fallback = "https://buildtrack-ai.onrender.com" + (rel.startsWith("/") ? rel : "/" + rel);
                       if (e.target.src !== fallback) {
                         e.target.src = fallback;
                       }

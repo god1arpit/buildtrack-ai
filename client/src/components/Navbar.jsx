@@ -29,6 +29,16 @@ export const Navbar = ({ toggleMobileSidebar, isMobileSidebarOpen }) => {
   };
 
   const handleConfigureIp = async () => {
+    if (window.location.hostname.endsWith(".vercel.app") || window.location.hostname.endsWith(".pages.dev")) {
+      const custom = localStorage.getItem("buildtrack_server_ip");
+      if (custom) {
+        localStorage.removeItem("buildtrack_server_ip");
+        window.alert("Cloud connection active! Any stale local server overrides have been removed.");
+      } else {
+        window.alert("BuildTrack Cloud is connected directly to permanent Cloud AI Services on Render.");
+      }
+      return;
+    }
     const current = localStorage.getItem("buildtrack_server_ip") || "192.168.0.101";
     const next = window.prompt(
       "Enter a BuildTrack connection code (BT1-...) or server address. Same Wi-Fi: laptop IP. Outside Wi-Fi: public HTTPS tunnel URL/code; the laptop and tunnel must stay online.",

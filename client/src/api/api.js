@@ -45,6 +45,18 @@ const normalizeServerHost = (value) => {
 };
 
 export const getServerHost = () => {
+  if (typeof window !== "undefined") {
+    // If running on Vercel production or Cloudflare Pages, always use the cloud services
+    // and wipe out any stale local network IP or dead temporary tunnel from localStorage
+    if (window.location.hostname.endsWith(".pages.dev") || window.location.hostname.endsWith(".vercel.app")) {
+      const customIp = localStorage.getItem("buildtrack_server_ip");
+      if (customIp && (customIp.includes("192.168.") || customIp.includes("lhr.life") || customIp.includes("localhost") || customIp.includes("127.0.0.1"))) {
+        localStorage.removeItem("buildtrack_server_ip");
+      }
+      return "";
+    }
+  }
+
   const customIp = localStorage.getItem("buildtrack_server_ip");
   if (customIp) {
     const normalized = normalizeServerHost(customIp);
@@ -59,12 +71,6 @@ export const getServerHost = () => {
   if (typeof window !== "undefined") {
     if (window.location.protocol === "capacitor:" || window.location.protocol === "file:") {
       return normalizeServerHost(import.meta.env.VITE_BUILDTRACK_SERVER_HOST) || "http://192.168.0.101";
-    }
-    // Cloudflare Pages hosts the static website separately from the existing
-    // Render API. Keep API and uploaded-media requests pointed at that backend
-    // instead of sending them to the Pages static host.
-    if (window.location.hostname.endsWith(".pages.dev") || window.location.hostname.endsWith(".vercel.app")) {
-      return "";
     }
     // If accessing from phone browser using local network IP (e.g. 192.168.0.101:5173)
     if (
@@ -84,6 +90,16 @@ export const getServerHost = () => {
 
 export const getApiBaseUrl = () => {
   if (typeof window !== "undefined" && window.location.protocol.startsWith("http")) {
+    // 1. In production (Vercel / Cloudflare Pages / public cloud): ALWAYS use live Render Node backend
+    if (window.location.hostname.endsWith(".vercel.app") || window.location.hostname.endsWith(".pages.dev")) {
+      return "https://buildtrack-1-28vu.onrender.com/api";
+    }
+
+    // 2. In web browser (localhost or phone on 192.168.x.x:5173), Vite dev proxy seamlessly forwards /api to port 5000
+    if (window.location.port === "5173" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "/api";
+    }
+
     const customIp = localStorage.getItem("buildtrack_server_ip");
     if (customIp && !customIp.includes("onrender.com")) {
       const normalized = normalizeServerHost(customIp);
@@ -91,13 +107,6 @@ export const getApiBaseUrl = () => {
         if (normalized.startsWith("https://")) return `${normalized}/api`;
         return `${normalized}:5000/api`;
       }
-    }
-    // In web browser (localhost or phone on 192.168.x.x:5173), Vite dev proxy seamlessly forwards /api to port 5000
-    if (window.location.port === "5173" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-      return "/api";
-    }
-    if (window.location.hostname.endsWith(".vercel.app") || window.location.hostname.endsWith(".pages.dev")) {
-      return "https://buildtrack-1-28vu.onrender.com/api";
     }
   }
 
@@ -111,6 +120,16 @@ export const getApiBaseUrl = () => {
 
 export const getAiApiBaseUrl = () => {
   if (typeof window !== "undefined" && window.location.protocol.startsWith("http")) {
+    // 1. In production (Vercel / Cloudflare Pages / public cloud): ALWAYS use live Render PyTorch AI directly
+    if (window.location.hostname.endsWith(".vercel.app") || window.location.hostname.endsWith(".pages.dev")) {
+      return "https://buildtrack-ai.onrender.com/api";
+    }
+
+    // 2. In web browser (localhost or phone on 192.168.x.x:5173), Vite dev proxy seamlessly forwards /ai-api to port 8000
+    if (window.location.port === "5173" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "/ai-api";
+    }
+
     const customIp = localStorage.getItem("buildtrack_server_ip");
     if (customIp && !customIp.includes("onrender.com")) {
       const normalized = normalizeServerHost(customIp);
@@ -118,12 +137,6 @@ export const getAiApiBaseUrl = () => {
         if (normalized.startsWith("https://")) return `${normalized}/ai-api/api`;
         return `${normalized}:8000/api`;
       }
-    }
-    if (window.location.port === "5173" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-      return "/ai-api";
-    }
-    if (window.location.hostname.endsWith(".vercel.app") || window.location.hostname.endsWith(".pages.dev")) {
-      return "https://buildtrack-ai.onrender.com/api";
     }
   }
 
@@ -144,6 +157,18 @@ export const resolveMediaUrl = (url) => {
     url.startsWith("data:") ||
     url.startsWith("blob:")
   ) {
+    // If an image URL mistakenly contains 192.168.0.101 or localhost on public web, route to Render
+    if (
+      typeof window !== "undefined" &&
+      (window.location.hostname.endsWith(".vercel.app") || window.location.hostname.endsWith(".pages.dev"))
+    ) {
+      if (url.includes(":8000/static/")) {
+        return url.replace(/^http:\/\/[^/]+:8000/, "https://buildtrack-ai.onrender.com");
+      }
+      if (url.includes(":5000/uploads/")) {
+        return url.replace(/^http:\/\/[^/]+:5000/, "https://buildtrack-1-28vu.onrender.com");
+      }
+    }
     return url;
   }
   const host =
@@ -226,12 +251,28 @@ export const previewRoadMask = async (file) => {
   return res.data;
 };
 
-export const measureRoadUnderConstruction = async (formData) => {
-  const res = await aiApi.post("/road-measure", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-    timeout: 180000,
-  });
-  return res.data;
+export const measureRoadUnderConstruction = async (formData, retryCount = 1) => {
+  try {
+    const res = await aiApi.post("/road-measure", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 180000,
+    });
+    return res.data;
+  } catch (err) {
+    if (
+      retryCount > 0 &&
+      (err.code === "ERR_NETWORK" ||
+        err.code === "ECONNABORTED" ||
+        err.response?.status === 502 ||
+        err.response?.status === 503 ||
+        err.response?.status === 504)
+    ) {
+      console.warn("AI Cloud Service warming up... auto-retrying in 3 seconds");
+      await new Promise((r) => setTimeout(r, 3000));
+      return measureRoadUnderConstruction(formData, retryCount - 1);
+    }
+    throw err;
+  }
 };
 
 export const fetchAIDashboard = async (projectId = "default") => {
