@@ -30,6 +30,8 @@ client/.gradle/
 # Whitelist production checkpoints under 100MB for cloud deployment
 !backend/models/road_boundary_mapillary_best.pth
 !backend/models/road_boundary_best.pth
+!backend/models/road_boundary_gravel_candidate.pth
+!backend/models/road_boundary_gravel_experiment_20261108.pth
 data/
 **/data/
 

@@ -1036,7 +1036,7 @@ export const BuilderAIWorkflow = () => {
                     <tbody className="divide-y divide-zinc-800/60 font-mono">
                       <tr className="hover:bg-zinc-800/30">
                         <td className="py-3 px-4 font-bold text-white">01</td>
-                        <td className="py-3 px-4 text-zinc-400 font-bold">{measureResult.measurements.chainage_start} → Ch 0+{Math.round(measureResult.measurements.completed_length_m).toString().padStart(3, "0")}</td>
+                        <td className="py-3 px-4 text-zinc-400 font-bold">~{measureResult.measurements.chainage_start} → ~Ch 0+{Math.round(measureResult.measurements.completed_length_m).toString().padStart(3, "0")}</td>
                         <td className="py-3 px-4 font-sans text-zinc-200">Dense Bituminous Macadam & Asphalt Wearing Course</td>
                         <td className="py-3 px-4 text-right text-emerald-400 font-bold">{measureResult.measurements.completed_length_m}</td>
                         <td className="py-3 px-4 text-right">{measureResult.measurements.avg_width_m}</td>
@@ -1050,7 +1050,7 @@ export const BuilderAIWorkflow = () => {
 
                       <tr className="hover:bg-zinc-800/30">
                         <td className="py-3 px-4 font-bold text-white">02</td>
-                        <td className="py-3 px-4 text-zinc-400 font-bold">Ch 0+{Math.round(measureResult.measurements.completed_length_m).toString().padStart(3, "0")} → {measureResult.measurements.chainage_end}</td>
+                        <td className="py-3 px-4 text-zinc-400 font-bold">~Ch 0+{Math.round(measureResult.measurements.completed_length_m).toString().padStart(3, "0")} → ~{measureResult.measurements.chainage_end}</td>
                         <td className="py-3 px-4 font-sans text-zinc-200">Subgrade Preparation, Granular Sub-base (GSB) & Compaction</td>
                         <td className="py-3 px-4 text-right text-green-400 font-bold">{measureResult.measurements.under_construction_length_m}</td>
                         <td className="py-3 px-4 text-right">{measureResult.measurements.avg_width_m}</td>

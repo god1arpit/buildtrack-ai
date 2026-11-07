@@ -54,6 +54,9 @@ class RoadVisionPipeline:
             return
         checkpoint_dir = os.path.join(os.path.dirname(__file__), "models")
         candidates = [
+            # Latest local gravel/road fine-tune; retained alongside the previous
+            # checkpoint so it can be rolled back without retraining.
+            os.path.join(checkpoint_dir, "road_boundary_gravel_experiment_20261108.pth"),
             os.path.join(checkpoint_dir, "road_boundary_gravel_candidate.pth"),
             os.path.join(checkpoint_dir, "road_boundary_local_refined.pth"),
             os.path.join(checkpoint_dir, "road_boundary_local_round3.pth"),
