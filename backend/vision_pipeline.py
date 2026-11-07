@@ -54,8 +54,10 @@ class RoadVisionPipeline:
             return
         checkpoint_dir = os.path.join(os.path.dirname(__file__), "models")
         candidates = [
-            os.path.join(checkpoint_dir, "road_boundary_mapillary_best.pth"),
+            os.path.join(checkpoint_dir, "road_boundary_gravel_candidate.pth"),
+            os.path.join(checkpoint_dir, "road_boundary_local_refined.pth"),
             os.path.join(checkpoint_dir, "road_boundary_local_round3.pth"),
+            os.path.join(checkpoint_dir, "road_boundary_mapillary_best.pth"),
             os.path.join(checkpoint_dir, "road_boundary_best.pth"),
         ]
         checkpoint_path = None

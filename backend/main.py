@@ -101,8 +101,9 @@ def health_check():
 def version_check():
     return {
         "version": app.version,
-        "commit": "lean-cpu-optim-v3",
+        "commit": "gravel-candidate-v1",
         "service": "BuildTrack AI Vision API",
+        "active_model": "road_boundary_gravel_candidate.pth",
         "pytorch_threads": 1,
         "memory_ceiling_mb": 512
     }
@@ -127,7 +128,7 @@ async def road_mask_preview(request: Request, file: UploadFile = File(...)):
         model_python = sys.executable
     script_path = os.path.join(os.path.dirname(__file__), "road_mask_inference.py")
     checkpoint_path = os.environ.get("BUILDTRACK_ROAD_MODEL_CHECKPOINT") or os.path.join(
-        os.path.dirname(__file__), "models", "road_boundary_mapillary_best.pth"
+        os.path.dirname(__file__), "models", "road_boundary_gravel_candidate.pth"
     )
     if not os.path.isfile(checkpoint_path):
         raise HTTPException(status_code=503, detail="The stable road model checkpoint is missing.")
