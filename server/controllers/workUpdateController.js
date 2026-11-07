@@ -77,7 +77,10 @@ export const submitWorkUpdate = async (req, res, next) => {
     // Update project progress if valid
     if (progressPercentage !== undefined && Number(progressPercentage) >= 0) {
       project.overallProgress = Math.min(100, Math.max(0, Number(progressPercentage)));
-      await project.save();
+      // The embedded JSON datastore returns a document copy from findById(),
+      // so mutating that object and calling save() does not update the stored
+      // project. Use the model update operation to persist the progress value.
+      await Project.findByIdAndUpdate(projectId, { overallProgress: project.overallProgress });
     }
 
     // Notify builder

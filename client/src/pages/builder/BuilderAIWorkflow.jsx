@@ -589,7 +589,7 @@ export const BuilderAIWorkflow = () => {
                     Trained ResNet18 U-Net Engine
                   </span>
                   <span className="text-xs font-bold bg-green-900/50 text-green-300 border border-green-700/30 px-3 py-1 rounded-full flex items-center gap-1">
-                    <Ruler className="w-3.5 h-3.5" /> Physical Scale Calibrated
+                    <Ruler className="w-3.5 h-3.5" /> Approximate image scale
                   </span>
                 </div>
                 <h2 className="text-2xl font-black text-white">
@@ -622,7 +622,7 @@ export const BuilderAIWorkflow = () => {
                   1. Dimension Calibration & Scale Settings
                 </h3>
                 <p className="text-xs text-zinc-400 mt-1">
-                  Calibrate camera scale using standard carriageway design width or drone GSD.
+                  Single photos give an approximate visible-section length. For reliable length use a GPS/GNSS trace or a top-down orthomosaic with known GSD.
                 </p>
               </div>
 
@@ -709,13 +709,13 @@ export const BuilderAIWorkflow = () => {
               {/* Optional GSD Input */}
               <div className="pt-1">
                 <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                  Drone GSD (Ground Sampling Distance - Optional)
+                  Orthomosaic GSD (cm/px - optional; top-down orthorectified images only)
                 </label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
                     step="0.1"
-                    placeholder="e.g. 2.5 (Auto-calculated if blank)"
+                    placeholder="e.g. 2.5 (orthomosaic only)"
                     value={customGsd}
                     onChange={(e) => setCustomGsd(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500"
@@ -873,7 +873,7 @@ export const BuilderAIWorkflow = () => {
                 {/* 1. Total Length */}
                 <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-5 shadow-lg">
                   <div className="flex items-center justify-between text-zinc-400 mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider">Total Measured Length</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Estimated Visible Road Length</span>
                     <span className="p-2 rounded-xl bg-zinc-500/15 text-zinc-400">
                       <Ruler className="w-4 h-4" />
                     </span>
@@ -884,7 +884,10 @@ export const BuilderAIWorkflow = () => {
                     </span>
                   </div>
                   <div className="text-[11px] text-zinc-400 font-semibold mt-2">
-                    Station: {measureResult.measurements.chainage_start} to {measureResult.measurements.chainage_end} ({measureResult.measurements.total_length_km} km)
+                    Image estimate · not full project length ({measureResult.measurements.total_length_km} km)
+                  </div>
+                  <div className="text-[11px] text-amber-300 mt-2 leading-relaxed">
+                    {measureResult.measurements.measurement_warning || "Approximate single-image estimate; perspective can distort length."}
                   </div>
                 </div>
 
@@ -1060,12 +1063,12 @@ export const BuilderAIWorkflow = () => {
                       </tr>
 
                       <tr className="bg-zinc-950 font-bold text-white border-t-2 border-zinc-700">
-                        <td className="py-3 px-4" colSpan={3}>TOTAL CORRIDOR MEASUREMENT SUMMARY</td>
+                        <td className="py-3 px-4" colSpan={3}>VISIBLE SECTION ESTIMATE (APPROX.)</td>
                         <td className="py-3 px-4 text-right text-zinc-400">{measureResult.measurements.total_length_m} m</td>
                         <td className="py-3 px-4 text-right text-zinc-400">{measureResult.measurements.avg_width_m} m</td>
                         <td className="py-3 px-4 text-right text-purple-400">{Number(measureResult.measurements.total_area_sqm).toLocaleString()} m²</td>
                         <td className="py-3 px-4 text-center text-zinc-400 font-sans text-[10px]">
-                          Verified by AI
+                            Approx. image estimate
                         </td>
                       </tr>
                     </tbody>
@@ -1276,6 +1279,9 @@ export const BuilderAIWorkflow = () => {
                         : `~${latestInference.prediction?.corridor_days_remaining ?? latestInference.prediction?.estimated_days_remaining ?? "—"} Day(s) Estimate`}
                     </span>
                   </div>
+                  <p className="text-[11px] text-amber-300 leading-relaxed">
+                    This forecast inherits the image measurement uncertainty. Do not use it for billing or official project completion; compare repeated GPS/orthomosaic surveys.
+                  </p>
 
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-black text-white font-mono">
@@ -1294,12 +1300,12 @@ export const BuilderAIWorkflow = () => {
                 {/* 3 Physical Dimension Cards */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] uppercase font-bold text-zinc-400 block">Total Road Length</span>
+                    <span className="text-[10px] uppercase font-bold text-zinc-400 block">Visible Road Estimate</span>
                     <span className="text-lg font-black text-white font-mono">
                       {latestInference.measurements.total_length_m} m
                     </span>
                     <span className="text-[10px] text-zinc-400 font-semibold block">
-                      {latestInference.measurements.chainage_start} → {latestInference.measurements.chainage_end}
+                      Image-based estimate · approximate
                     </span>
                   </div>
 

@@ -58,6 +58,7 @@ cloudflared*.exe
 # Temp files & Backups
 .tmp*
 backups/
+_review/
 .vscode/
 .idea/
 .DS_Store

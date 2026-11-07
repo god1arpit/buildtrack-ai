@@ -344,7 +344,10 @@ def measure_road_and_annotate(
     )
 
     # Primary Row: Length, Width, Area
-    row1 = f"TOTAL LENGTH: {total_length_m:.1f} m ({total_length_km:.3f} km)  |  AVG WIDTH: {avg_width_m:.1f} m  |  AREA: {total_area_sqm:,.0f} sq.m"
+    # A single perspective image does not provide a globally valid ground scale.
+    # Keep the numeric estimate for exploration, but label its calibration source.
+    scale_method = "provided_orthomosaic_gsd" if gsd_m_per_px is not None and gsd_m_per_px > 0 else "assumed_design_width"
+    row1 = f"VISIBLE ROAD ESTIMATE: ~{total_length_m:.1f} m  |  AVG WIDTH: ~{avg_width_m:.1f} m  |  AREA: ~{total_area_sqm:,.0f} sq.m"
     cv2.putText(annotated, row1, (22, 58), cv2.FONT_HERSHEY_SIMPLEX, 0.46, (255, 255, 255), 1, cv2.LINE_AA)
 
     # Secondary Row: Under Construction vs Completed
@@ -365,6 +368,14 @@ def measure_road_and_annotate(
         "under_construction_pct": under_const_pct,
         "under_construction_area_sqm": under_const_area_sqm,
         "gsd_cm_per_px": round(gsd_cm, 2),
+        "scale_method": scale_method,
+        "length_is_approximate": True,
+        "measurement_warning": (
+            "Approximate visible-section estimate. Single-image perspective can distort length; "
+            "use a GPS/GNSS trace or orthorectified drone orthomosaic with known GSD for measured length."
+            if scale_method == "assumed_design_width" else
+            "GSD scale is only valid for an orthorectified/top-down orthomosaic; perspective photos can distort length."
+        ),
         "chainage_start": "Ch 0+000",
         "chainage_end": f"Ch 0+{int(total_length_m):03d}",
         "calibrated_road_width_m": known_road_width_m,

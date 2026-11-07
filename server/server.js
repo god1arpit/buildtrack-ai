@@ -72,8 +72,9 @@ app.get("/api/health", (req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`[BuildTrack Server] Running on http://0.0.0.0:${PORT}`);
+const HOST = process.env.BUILDTRACK_HOST || "0.0.0.0";
+app.listen(PORT, HOST, () => {
+  console.log(`[BuildTrack Server] Running on http://${HOST}:${PORT}`);
 });
 
 export default app;
